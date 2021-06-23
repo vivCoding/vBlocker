@@ -4,24 +4,22 @@
     "version": "1.0",
   
     "description": "Blocks user specified domains",
-
-    "permissions": [
-        "webRequest", "webRequestBlocking", "<all_urls>"
-    ],
-
+    
     "icons": {
         "48": "assets/logo-48.png",
         "96": "assets/logo-96.png"
     },
 
+    "permissions": ["webRequest", "webRequestBlocking", "<all_urls>", "storage"],
+    
 	"browser_action": {
 		"default_icon": "assets/logo-32.png",
 		"default_title": "vBlocker",
-        "default_popup": "popup/index.html"
+        "default_popup": "popup/popup.html"
 	},
 
     "options_ui": {
-        "page": "pages/settings.html",
+        "page": "settings/settings.html",
         "open_in_tab": true
     },
 
@@ -33,7 +31,7 @@
     },
 
     "web_accessible_resources": [
-        "pages/blocked.html"
+        "blocked/blocked.html"
     ],
 
     "content_scripts": [

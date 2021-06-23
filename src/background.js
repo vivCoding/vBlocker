@@ -1,14 +1,15 @@
-function getBlockedUrls() {
-	return ['google.com']
-}
+let blockedDomains = []
+
+chrome.storage.local.get("blockedDomains", data => {
+	blockedDomains = data.blockedDomains ?? []
+})
 
 function checkRequest(request) {
 	if (!request) return
 	let url = new URL(request.url)
 	let domain = url.hostname.replace('www.', '')
-	let blockedUrls = getBlockedUrls()
-	if (blockedUrls.includes(domain)) {
-		return {redirectUrl: chrome.extension.getURL('../pages/blocked.html')};
+	if (blockedDomains.includes(domain)) {
+		return {redirectUrl: chrome.extension.getURL('../blocked/blocked.html')};
 	}
 }
 
@@ -17,3 +18,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 	{urls: ["<all_urls>"]},
 	['blocking']
 );
+
+chrome.storage.onChanged.addListener(changes => {
+	blockedDomains = changes.blockedDomains.newValue
+})
