@@ -1,0 +1,28 @@
+* {
+	font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+	color: white
+}
+
+body {
+	background-color: rgb(30, 34, 37);
+	margin: 0;
+	padding: 2em
+}
+
+#popup {
+	border: 1px solid rgb(167, 167, 167);
+	border-radius: 10px;
+	text-align: center;
+	min-width: 100px;
+}
+
+#popup button {
+	background-color: black;
+	border: 2px solid white;
+	font-size: small;
+	margin: 3px;
+}
+
+#popup button:hover {
+	cursor: pointer;
+}
