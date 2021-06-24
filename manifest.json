@@ -40,6 +40,8 @@
             "js": [
 				"lib/jquery_3.6_min.js",
                 "lib/urlParser.js",
+                "lib/password.js",
+                "lib/domains.js",
 				"src/main.js"
 			]
         }

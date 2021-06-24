@@ -1,39 +1,27 @@
 $("document", () => {
-	$("#content").hide()
+	$("#settings").hide()
 	console.log("vBlocker settings")
-	askPassword(renderContent)
+	askPassword(success => {
+		if (success) renderContent()
+	})
 })
 
 $("#saveBtn").click(save)
 $("#addBtn").click(addDomain)
 $("#changePwdBtn").click(changePassword)
 
-function askPassword(callback=undefined, warn=true) {
-	chrome.storage.local.get("password", data => {
-		let password = data.password
-		if (!password && warn) {
-			alert("Warning: No password has been set!\nSet a password in the settings page to avoid users modifying blocked sites")
-		} else if (password) {
-			while (true) {
-				input = prompt("Enter password")
-				if (input === password) {
-					break
-				} else if (input === null) {
-					return false
-				} else {
-					alert("Incorrect password")
-				}
-			}
-		}
-		if (callback) callback()
-	})
-}
-
 let blockedDomains = []
 let blockedDomainList = $("#blockedDomainsList")
+let saved = true
+
+$(window).on("beforeunload", function() {
+	if (!saved) {
+		return "You have unsaved changes. Are you sure you wish to leave?"
+	}
+})
 
 function renderContent() {
-	$("#content").show()
+	$("#settings").show()
 	chrome.storage.local.get("blockedDomains", data => {
 		blockedDomains = data?.blockedDomains ?? []
 		if (blockedDomains.length == 0) {
@@ -60,19 +48,24 @@ function renderDomainToList(domain) {
 
 function addDomain() {
 	while (true) {
-		let domain = prompt("Enter domain to block")
+		let domain = prompt("Enter domain to block:")
 		if (domain === null) return
 		else if (/\S/.test(domain)) {
-			blockedDomains.push(domain)
-			renderDomainToList(domain)
-			return
+			if (blockedDomains.indexOf(domain) === -1) {
+				blockedDomains.push(domain)
+				renderDomainToList(domain)
+				saved = false
+			} else {
+				alert('Domain already added!')
+			}
+			break
 		} else alert("Domain cannot be blank!")
 	}
 }
 
 function changePassword() {
-	askPassword(function() {
-		while (true) {
+	askPassword(success => {
+		while (success) {
 			let newPassword = prompt("Enter new password")
 			if (newPassword == null) return
 			let confirmPassword = prompt("Re-enter new password")
@@ -80,9 +73,7 @@ function changePassword() {
 			if (newPassword === confirmPassword) {
 				chrome.storage.local.set({ password: newPassword}, function() {
 					alert("Successfully changed password!")
-					console.log("new password is", newPassword)
 				})
-				return
 			} else {
 				alert("New password and confirmed new password did not match!")
 			}
@@ -94,6 +85,7 @@ function save() {
 	askPassword(function() {
 		chrome.storage.local.set({ blockedDomains: blockedDomains }, function() {
 			alert("Successfully saved changes!")
+			saved = true
 		})
 	})
 }

@@ -9,6 +9,14 @@ body {
 	padding: 2em
 }
 
+#blockedMessage {
+	display: flex;
+	height: 60vh;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
 #popup {
 	border: 1px solid rgb(167, 167, 167);
 	border-radius: 10px;
@@ -26,4 +34,8 @@ button {
 
 button:hover {
 	cursor: pointer;
+}
+
+#settings-content {
+	display: none;
 }

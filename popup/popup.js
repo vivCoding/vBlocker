@@ -1,9 +1,10 @@
-$("#block").click(function(e) {
-	domain = getDomain(window.location.href)
-	// let confirmation = confirm(`Block this domain ${chrome.} ?`)
+$("#blockBtn").click(function(e) {
+	chrome.tabs.query({active: true, currentWindow: true}, tabs => {
+		chrome.tabs.sendMessage(tabs[0].id, 'confirmBlock')
+	})
 })
 
-$("#settings").click(function (e) { 
+$("#settingsBtn").click(function (e) { 
 	chrome.tabs.create({
 		url: chrome.extension.getURL('../settings/settings.html')
 	})
