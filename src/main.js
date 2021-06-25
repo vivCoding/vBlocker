@@ -2,8 +2,9 @@ $("document", () => {
 	console.log('vBlocker loaded')
 })
 
-chrome.runtime.onMessage.addListener(message => {
+chrome.runtime.onMessage.addListener(({ message, payload }, sender, response) => {
 	let domain = getDomainAndPath(window.location.href)
+	console.log(message)
 	switch(message) {
 		case 'confirmBlock':
 			let confirmedDomain = window.prompt(`Block this domain?`, domain)

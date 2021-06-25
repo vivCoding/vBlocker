@@ -9,12 +9,31 @@ body {
 	padding: 2em
 }
 
+button {
+	background-color: black;
+	border: 2px solid white;
+	font-size: medium;
+	margin: 3px;
+	border-radius: 5px;
+}
+
+button:hover {
+	cursor: pointer;
+	background-color: rgb(46, 46, 46);
+	opacity: 70%;
+}
+
 #blockedMessage {
 	display: flex;
-	height: 60vh;
+	height: 80vh;
 	flex-direction: column;
 	justify-content: center;
 	align-items: center;
+}
+
+#blockedMessage button {
+	margin-top: 2em;
+	font-size: larger;
 }
 
 #popup {
@@ -24,16 +43,8 @@ body {
 	min-width: 100px;
 }
 
-button {
-	background-color: black;
-	border: 2px solid white;
+#popup button {
 	font-size: small;
-	margin: 3px;
-	border-radius: 5px;
-}
-
-button:hover {
-	cursor: pointer;
 }
 
 #settings {

@@ -1,6 +1,8 @@
 let blockedDomains = []
-let blockedDomainList = $("#blockedDomainsList")
+let tempAccessDomains = []
 let saved = true
+let blockedDomainList = $("#blockedDomainsList")
+let tempAccessList = $("#tempAccessList")
 let settingsContent = $("#settings")
 let accessDeniedMessage = $("#accessDenied")
 
@@ -12,7 +14,7 @@ $("document", () => {
 	settingsContent.hide()
 	console.log("vBlocker settings")
 	askPassword(success => {
-		if (success) renderContent()
+		if (success) renderSettings()
 		else accessDeniedMessage.show()
 	})
 })
@@ -23,7 +25,7 @@ $(window).on("beforeunload", function() {
 	}
 })
 
-function renderContent() {
+function renderSettings() {
 	settingsContent.show()
 	accessDeniedMessage.hide()
 	chrome.storage.local.get("blockedDomains", data => {
@@ -35,15 +37,38 @@ function renderContent() {
 			renderDomainToList(domain)
 		});
 	})
+	chrome.runtime.sendMessage({message: 'getTempAccess' }, response => {
+		tempAccessDomains = response
+		if (tempAccessDomains.length == 0) {
+			tempAccessDomains.append(`<p>No temporarily allowed domains yet.</p>`)
+		}
+		tempAccessDomains.forEach(domain => {
+			renderTempAccessDomainToList(domain)
+		})
+	})
 }
 
 function renderDomainToList(domain) {
 	let li = $('<li></li>')
-	rerenderListElement(li, domain)
+	rerenderBlockedDomain(li, domain)
 	blockedDomainList.append(li)
 }
 
-function rerenderListElement(listElement, domain) {
+function renderTempAccessDomainToList(domain) {
+	let li = $('<li></li>')
+	li.append(`<span>${domain}</span>`)
+		.append($("<button class='removeTempAccessBtn'>Block</button>"))
+			.click(function() {
+				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
+					tempAccessDomains.splice(tempAccessDomains.indexOf(domain), 1)
+					li.remove()
+					saved = false
+				}
+			})
+	tempAccessList.append(li)
+}
+
+function rerenderBlockedDomain(listElement, domain) {
 	listElement.empty()
 		.append(`<span>${domain}</span>`)
 		.append($("<button class='unlockBtn'>Remove</button>")
@@ -51,6 +76,7 @@ function rerenderListElement(listElement, domain) {
 				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
 					blockedDomains.splice(blockedDomains.indexOf(domain), 1)
 					listElement.remove()
+					saved = false
 				}
 			}))
 		.append($("<button class='editBtn'></button>").text("Edit")
@@ -62,24 +88,15 @@ function rerenderListElement(listElement, domain) {
 						if (confirm(`Change "${domain}" to "${editPrompt}"?`)) {
 							let newDomain = editPrompt
 							blockedDomains[blockedDomains.indexOf(domain)] = newDomain
-							rerenderListElement(listElement, newDomain)
+							tempAccessDomains
+							rerenderBlockedDomain(listElement, newDomain)
+							saved = false
 							break
 						}
 					} else break
 				}
 			}))
 		
-}
-
-function addUnblockBtn(domain) {
-	let unblockBtn = $("<button class='unlockBtn'></button>").text("Remove").click(function() {
-		if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
-			console.log(domain, blockedDomains.indexOf(text.text()), blockedDomains)
-			blockedDomains.splice(blockedDomains.indexOf(domain), 1)
-			$(this).closest("li").remove()
-		}
-	})
-	return unblockBtn
 }
 
 function addDomain() {
@@ -120,9 +137,11 @@ function changePassword() {
 
 function save() {
 	askPassword(function() {
+		// TODO: somehow increase this security
 		chrome.storage.local.set({ blockedDomains: blockedDomains }, function() {
 			alert("Successfully saved changes!")
 			saved = true
 		})
+		chrome.runtime.sendMessage({message: 'setTempAccess', payload: tempAccess})
 	})
 }
