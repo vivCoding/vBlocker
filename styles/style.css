@@ -36,6 +36,10 @@ button:hover {
 	cursor: pointer;
 }
 
-#settings-content {
+#settings {
 	display: none;
+}
+
+#settings #blockedDomainsList span {
+	margin-right: 1em;
 }

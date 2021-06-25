@@ -1,18 +1,21 @@
-$("document", () => {
-	$("#settings").hide()
-	console.log("vBlocker settings")
-	askPassword(success => {
-		if (success) renderContent()
-	})
-})
+let blockedDomains = []
+let blockedDomainList = $("#blockedDomainsList")
+let saved = true
+let settingsContent = $("#settings")
+let accessDeniedMessage = $("#accessDenied")
 
 $("#saveBtn").click(save)
 $("#addBtn").click(addDomain)
 $("#changePwdBtn").click(changePassword)
 
-let blockedDomains = []
-let blockedDomainList = $("#blockedDomainsList")
-let saved = true
+$("document", () => {
+	settingsContent.hide()
+	console.log("vBlocker settings")
+	askPassword(success => {
+		if (success) renderContent()
+		else accessDeniedMessage.show()
+	})
+})
 
 $(window).on("beforeunload", function() {
 	if (!saved) {
@@ -21,7 +24,8 @@ $(window).on("beforeunload", function() {
 })
 
 function renderContent() {
-	$("#settings").show()
+	settingsContent.show()
+	accessDeniedMessage.hide()
 	chrome.storage.local.get("blockedDomains", data => {
 		blockedDomains = data?.blockedDomains ?? []
 		if (blockedDomains.length == 0) {
@@ -34,16 +38,48 @@ function renderContent() {
 }
 
 function renderDomainToList(domain) {
-	let li = $('<li></li>').text(domain + " ")
-	let button = $("<button class='unlockBtn'></button>").text("Unblock").click(function() {
-		if (confirm("Are you sure you want to unblock this domain?")) {
-			console.log("unblocked domain")
+	let li = $('<li></li>')
+	rerenderListElement(li, domain)
+	blockedDomainList.append(li)
+}
+
+function rerenderListElement(listElement, domain) {
+	listElement.empty()
+		.append(`<span>${domain}</span>`)
+		.append($("<button class='unlockBtn'>Remove</button>")
+			.click(function() {
+				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
+					blockedDomains.splice(blockedDomains.indexOf(domain), 1)
+					listElement.remove()
+				}
+			}))
+		.append($("<button class='editBtn'></button>").text("Edit")
+			.click(function() {
+				let editPrompt = domain
+				while (true) {
+					editPrompt = prompt("Edit domain:", editPrompt)
+					if (!!editPrompt) {
+						if (confirm(`Change "${domain}" to "${editPrompt}"?`)) {
+							let newDomain = editPrompt
+							blockedDomains[blockedDomains.indexOf(domain)] = newDomain
+							rerenderListElement(listElement, newDomain)
+							break
+						}
+					} else break
+				}
+			}))
+		
+}
+
+function addUnblockBtn(domain) {
+	let unblockBtn = $("<button class='unlockBtn'></button>").text("Remove").click(function() {
+		if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
+			console.log(domain, blockedDomains.indexOf(text.text()), blockedDomains)
+			blockedDomains.splice(blockedDomains.indexOf(domain), 1)
 			$(this).closest("li").remove()
-			blockedDomains.splice($.inArray(domain, blockedDomains), 1)
 		}
 	})
-	li.append(button)
-	blockedDomainList.append(li)
+	return unblockBtn
 }
 
 function addDomain() {
@@ -74,6 +110,7 @@ function changePassword() {
 				chrome.storage.local.set({ password: newPassword}, function() {
 					alert("Successfully changed password!")
 				})
+				break
 			} else {
 				alert("New password and confirmed new password did not match!")
 			}

@@ -3,14 +3,17 @@ $("document", () => {
 })
 
 chrome.runtime.onMessage.addListener(message => {
-	let domain = getDomain(window.location.href)
+	let domain = getDomainAndPath(window.location.href)
 	switch(message) {
 		case 'confirmBlock':
-			let confirm = window.confirm(`Block domain ${domain}?`)
-			if (confirm) {
+			let confirmedDomain = window.prompt(`Block this domain?`, domain)
+			if (confirmedDomain) {
 				askPassword(success => {
 					if (success) {
-						pushBlockedDomains(domain, () => alert(`Added domain ${domain} to blocked domains list!\nYou can unblock it later in the settings page.`))
+						pushBlockedDomains(confirmedDomain, () => {
+							alert(`Added domain ${confirmedDomain} to blocked domains list!\nYou can edit it later in the settings page.`)
+							window.location.reload()
+						})
 					}
 				})
 			}
