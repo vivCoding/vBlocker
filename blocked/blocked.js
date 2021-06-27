@@ -15,9 +15,12 @@ $("#tempAccessBtn").click(function() {
 				alert(`Allowing temporarily access for "${blocked.blockedPath}" for this session. It will automatically be removed when the browser restarts. \n
 					You can also remove it during this session through the settings page.
 				`)
-				chrome.runtime.sendMessage({ message: "addTempAccess", payload: blocked.blockedPath }, response => {
+				// in case it doesn't reload page
+				$("#navigateBtn").text(`Go to ${blocked.url}`).click(function () {
 					window.location.href = blocked.url
-				})
+				}).show()
+				window.location.href = blocked.url
+				chrome.runtime.sendMessage({ message: "addTempAccess", payload: blocked.blockedPath })
 			}
 		})
 	}

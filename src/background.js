@@ -1,9 +1,11 @@
-let blockedDomains = []
 let recentlyBlocked = { url: '', blockedPath: '' }
+let storageBlockedDomains = []
 let tempAccess = []
+let sessionBlockedDomains = []
 
 chrome.storage.local.get("blockedDomains", data => {
-	blockedDomains = data.blockedDomains ?? []
+	storageBlockedDomains = data.blockedDomains ?? []
+	sessionBlockedDomains = storageBlockedDomains
 })
 
 function checkRequest(request) {
@@ -12,9 +14,9 @@ function checkRequest(request) {
 	let domain = url.hostname.replace('www.', '')
 	let path = url.pathname.split('/').filter(pathname => pathname !== "")
 	path.unshift(domain)
-	for (let i = 0; i < blockedDomains.length; i++) {
+	for (let i = 0; i < sessionBlockedDomains.length; i++) {
 		let samePath = true
-		let blockedPath = blockedDomains[i].split('/')
+		let blockedPath = sessionBlockedDomains[i].split('/')
 		for (let j = 0; j < blockedPath.length; j++) {
 			if (path[j] !== blockedPath[j]) {
 				samePath = false
@@ -23,7 +25,7 @@ function checkRequest(request) {
 		if (samePath && path.length >= blockedPath.length) {
 			console.log('blocked', path, blockedPath)
 			recentlyBlocked.url = request.url
-			recentlyBlocked.blockedPath = blockedDomains[i]
+			recentlyBlocked.blockedPath = sessionBlockedDomains[i]
 			return {redirectUrl: chrome.extension.getURL('../blocked/blocked.html')};
 		}
 	}
@@ -36,7 +38,8 @@ chrome.webRequest.onBeforeRequest.addListener(
 );
 
 chrome.storage.onChanged.addListener(changes => {
-	blockedDomains = changes.blockedDomains.newValue
+	storageBlockedDomains = changes.blockedDomains.newValue
+	sessionBlockedDomains = storageBlockedDomains.filter(domain => !tempAccess.includes(domain))
 })
 
 chrome.runtime.onMessage.addListener(({message, payload}, sender, sendResponse) => {
@@ -49,11 +52,11 @@ chrome.runtime.onMessage.addListener(({message, payload}, sender, sendResponse) 
 			break
 		case 'addTempAccess':
 			tempAccess.push(payload)
-			blockedDomains = blockedDomains.filter(domain => !tempAccess.includes(domain))
+			sessionBlockedDomains = storageBlockedDomains.filter(domain => !tempAccess.includes(domain))
 			break
 		case 'setTempAccess': 
 			tempAccess = payload
-			blockedDomains = blockedDomains.filter(domain => !tempAccess.includes(domain))
+			sessionBlockedDomains = storageBlockedDomains.filter(domain => !tempAccess.includes(domain))
 			break
 	}
 })

@@ -31,9 +31,16 @@ button:hover {
 	align-items: center;
 }
 
-#blockedMessage button {
+.btnSection {
 	margin-top: 2em;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+#blockedMessage button {
 	font-size: larger;
+	margin: 0.5em
 }
 
 #popup {

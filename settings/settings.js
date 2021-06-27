@@ -40,7 +40,7 @@ function renderSettings() {
 	chrome.runtime.sendMessage({message: 'getTempAccess' }, response => {
 		tempAccessDomains = response
 		if (tempAccessDomains.length == 0) {
-			tempAccessDomains.append(`<p>No temporarily allowed domains yet.</p>`)
+			tempAccessList.append(`<p>No temporarily allowed domains yet.</p>`)
 		}
 		tempAccessDomains.forEach(domain => {
 			renderTempAccessDomainToList(domain)
@@ -59,7 +59,7 @@ function renderTempAccessDomainToList(domain) {
 	li.append(`<span>${domain}</span>`)
 		.append($("<button class='removeTempAccessBtn'>Block</button>"))
 			.click(function() {
-				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
+				if (confirm(`Remove temporarily access for "${domain}"?`)) {
 					tempAccessDomains.splice(tempAccessDomains.indexOf(domain), 1)
 					li.remove()
 					saved = false
@@ -88,7 +88,6 @@ function rerenderBlockedDomain(listElement, domain) {
 						if (confirm(`Change "${domain}" to "${editPrompt}"?`)) {
 							let newDomain = editPrompt
 							blockedDomains[blockedDomains.indexOf(domain)] = newDomain
-							tempAccessDomains
 							rerenderBlockedDomain(listElement, newDomain)
 							saved = false
 							break
@@ -142,6 +141,6 @@ function save() {
 			alert("Successfully saved changes!")
 			saved = true
 		})
-		chrome.runtime.sendMessage({message: 'setTempAccess', payload: tempAccess})
+		chrome.runtime.sendMessage({message: 'setTempAccess', payload: tempAccessDomains})
 	})
 }
