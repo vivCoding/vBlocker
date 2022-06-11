@@ -20,3 +20,8 @@ instagram.com/expore
 
 ### Installation
 Coming soon
+
+### Roadmap
+- Upgrade to manifest V3
+- Add feature to block all except (list of urls)
+- Block disabling/uninstalling extension

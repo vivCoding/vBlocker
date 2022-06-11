@@ -19,7 +19,7 @@ $("document", () => {
 	})
 })
 
-$(window).on("beforeunload", function() {
+$(window).on("beforeunload", function () {
 	if (!saved) {
 		return "You have unsaved changes. Are you sure you wish to leave?"
 	}
@@ -37,7 +37,7 @@ function renderSettings() {
 			renderDomainToList(domain)
 		});
 	})
-	chrome.runtime.sendMessage({message: 'getTempAccess' }, response => {
+	chrome.runtime.sendMessage({ message: 'getTempAccess' }, response => {
 		tempAccessDomains = response
 		if (tempAccessDomains.length == 0) {
 			tempAccessList.append(`<p>No temporarily allowed domains yet.</p>`)
@@ -58,13 +58,13 @@ function renderTempAccessDomainToList(domain) {
 	let li = $('<li></li>')
 	li.append(`<span>${domain}</span>`)
 		.append($("<button class='removeTempAccessBtn'>Block</button>"))
-			.click(function() {
-				if (confirm(`Remove temporarily access for "${domain}"?`)) {
-					tempAccessDomains.splice(tempAccessDomains.indexOf(domain), 1)
-					li.remove()
-					saved = false
-				}
-			})
+		.click(function () {
+			if (confirm(`Remove temporarily access for "${domain}"?`)) {
+				tempAccessDomains.splice(tempAccessDomains.indexOf(domain), 1)
+				li.remove()
+				saved = false
+			}
+		})
 	tempAccessList.append(li)
 }
 
@@ -72,7 +72,7 @@ function rerenderBlockedDomain(listElement, domain) {
 	listElement.empty()
 		.append(`<span>${domain}</span>`)
 		.append($("<button class='unlockBtn'>Remove</button>")
-			.click(function() {
+			.click(function () {
 				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
 					blockedDomains.splice(blockedDomains.indexOf(domain), 1)
 					listElement.remove()
@@ -80,7 +80,7 @@ function rerenderBlockedDomain(listElement, domain) {
 				}
 			}))
 		.append($("<button class='editBtn'></button>").text("Edit")
-			.click(function() {
+			.click(function () {
 				let editPrompt = domain
 				while (true) {
 					editPrompt = prompt("Edit domain:", editPrompt)
@@ -95,7 +95,7 @@ function rerenderBlockedDomain(listElement, domain) {
 					} else break
 				}
 			}))
-		
+
 }
 
 function addDomain() {
@@ -123,7 +123,7 @@ function changePassword() {
 			let confirmPassword = prompt("Re-enter new password")
 			if (confirmPassword == null) return
 			if (newPassword === confirmPassword) {
-				chrome.storage.local.set({ password: newPassword}, function() {
+				chrome.storage.local.set({ password: newPassword }, function () {
 					alert("Successfully changed password!")
 				})
 				break
@@ -131,16 +131,16 @@ function changePassword() {
 				alert("New password and confirmed new password did not match!")
 			}
 		}
-	}, warn=false)
+	}, warn = false)
 }
 
 function save() {
-	askPassword(function() {
+	askPassword(function () {
 		// TODO: somehow increase this security
-		chrome.storage.local.set({ blockedDomains: blockedDomains }, function() {
+		chrome.storage.local.set({ blockedDomains: blockedDomains }, function () {
 			alert("Successfully saved changes!")
 			saved = true
 		})
-		chrome.runtime.sendMessage({message: 'setTempAccess', payload: tempAccessDomains})
+		chrome.runtime.sendMessage({ message: 'setTempAccess', payload: tempAccessDomains })
 	})
 }

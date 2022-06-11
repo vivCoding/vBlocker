@@ -8,7 +8,7 @@ $("document", () => {
 	})
 })
 
-$("#tempAccessBtn").click(function() {
+$("#tempAccessBtn").click(function () {
 	if (confirm(`Allow temporarily access for "${blocked.blockedPath}"?`)) {
 		askPassword(success => {
 			if (success) {
@@ -27,7 +27,7 @@ $("#tempAccessBtn").click(function() {
 })
 
 
-$("#settingsBtn").click(function (e) { 
+$("#settingsBtn").click(function (e) {
 	chrome.tabs.create({
 		url: chrome.extension.getURL('../settings/settings.html')
 	})
