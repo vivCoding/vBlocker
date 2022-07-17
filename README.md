@@ -1,7 +1,7 @@
 # vBlocker
 Simple browser extension that blocks user from accessing specified domains with a password.
 
-This extension uses manifest v3.
+This extension uses manifest v3. If you are looking for the manifest v2 version (which is [soon to be deprecated](https://developer.chrome.com/docs/extensions/mv3/mv2-sunset/)), go to the [manifest_v2 branch](https://github.com/vivCoding/vBlocker/tree/manifest_v2)
 
 [Watch demo](https://youtu.be/RSFkTDDa0gQ)
 
