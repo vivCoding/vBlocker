@@ -10,3 +10,7 @@
     font-size: larger;
     margin: 0.5em
 }
+
+#blockedImg {
+    max-height: 300px;
+}
