@@ -1,43 +1,25 @@
 /* Runs in background during browser session */
 
+console.log("Running vBlocker background.js")
+
 let blockedDomains = []
 let tempAccess = []
 
-// load domains and block them for this session
-chrome.storage.local.get('blockedDomains', data => {
-    blockedDomains = data.blockedDomains ?? []
-    console.log(blockedDomains)
-    const rules = blockedDomains.map(domain => ({
-        id: hashString(domain),
-        priority: 1,
-        action: {
-            type: "redirect",
-            redirect: {
-                extensionPath: "/blocked/blocked.html"
-            }
-        },
-        condition: {
-            urlFilter: domain,
-            resourceTypes: [
-                "main_frame"
-            ]
-        }
-    }))
-    chrome.declarativeNetRequest.updateSessionRules({ addRules: rules })
+chrome.declarativeNetRequest.getDynamicRules(data => {
+    blockedDomains = data.map(rule => rule.condition.urlFilter)
 })
 
 function blockDomain(domain) {
     if (blockedDomains.indexOf(domain) === -1) {
         blockedDomains.push(domain)
-        chrome.storage.local.set({ blockedDomains })
-        chrome.declarativeNetRequest.updateSessionRules({
+        chrome.declarativeNetRequest.updateDynamicRules({
             addRules: [{
                 id: hashString(domain),
                 priority: 1,
                 action: {
                     type: "redirect",
                     redirect: {
-                        extensionPath: "/blocked/blocked.html"
+                        extensionPath: "/blocked/index.html"
                     }
                 },
                 condition: {
@@ -55,8 +37,7 @@ function unblockDomain(domain) {
     let idx = blockedDomains.indexOf(domain)
     if (idx !== -1) {
         blockedDomains.splice(idx, 1)
-        chrome.storage.local.set({ blockedDomains })
-        chrome.declarativeNetRequest.updateSessionRules({
+        chrome.declarativeNetRequest.updateDynamicRules({
             removeRuleIds: [hashString(domain)]
         })
     }
@@ -66,7 +47,19 @@ function addTempAccessDomain(domain) {
     if (tempAccess.indexOf(domain) === -1) {
         tempAccess.push(domain)
         chrome.declarativeNetRequest.updateSessionRules({
-            removeRuleIds: [hashString(domain)]
+            addRules: [{
+                id: hashString(domain),
+                priority: 2,
+                action: {
+                    type: "allow",
+                },
+                condition: {
+                    urlFilter: domain,
+                    resourceTypes: [
+                        "main_frame"
+                    ]
+                }
+            }]
         })
     }
 }
@@ -76,22 +69,7 @@ function removeTempAccessDomain(domain) {
     if (idx !== -1) {
         tempAccess.splice(idx, 1)
         chrome.declarativeNetRequest.updateSessionRules({
-            addRules: [{
-                id: hashString(domain),
-                priority: 1,
-                action: {
-                    type: "redirect",
-                    redirect: {
-                        extensionPath: "/blocked/blocked.html"
-                    }
-                },
-                condition: {
-                    urlFilter: domain,
-                    resourceTypes: [
-                        "main_frame"
-                    ]
-                }
-            }]
+            removeRuleIds: [hashString(domain)]
         })
     }
 }

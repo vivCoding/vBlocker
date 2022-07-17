@@ -1,0 +1,7 @@
+#settings {
+    display: none;
+}
+
+#settings #blockedDomainsList span {
+    margin-right: 1em;
+}

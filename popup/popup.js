@@ -8,6 +8,6 @@ $("#blockBtn").click(function (e) {
 
 $("#settingsBtn").click(function (e) {
     chrome.tabs.create({
-        url: '../settings/settings.html'
+        url: '../settings/index.html'
     })
 })
