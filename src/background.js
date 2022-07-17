@@ -1,68 +1,136 @@
-let recentlyBlocked = { url: '', blockedPath: '' }
-let storageBlockedDomains = []
+/* Runs in background during browser session */
+
+let blockedDomains = []
 let tempAccess = []
-let sessionBlockedDomains = []
 
-chrome.storage.local.get("blockedDomains", data => {
-	storageBlockedDomains = data.blockedDomains ?? []
-	sessionBlockedDomains = storageBlockedDomains
+// load domains and block them for this session
+chrome.storage.local.get('blockedDomains', data => {
+    blockedDomains = data.blockedDomains ?? []
+    console.log(blockedDomains)
+    const rules = blockedDomains.map(domain => ({
+        id: hashString(domain),
+        priority: 1,
+        action: {
+            type: "redirect",
+            redirect: {
+                extensionPath: "/blocked/blocked.html"
+            }
+        },
+        condition: {
+            urlFilter: domain,
+            resourceTypes: [
+                "main_frame"
+            ]
+        }
+    }))
+    chrome.declarativeNetRequest.updateSessionRules({ addRules: rules })
 })
 
-chrome.webRequest.onBeforeRequest.addListener(
-	(request) => {
-		if (!request) return
-		let url = new URL(request.url)
-		if (url === 'about:addons') {
-			console.log('blocked about:addons')
-			recentlyBlocked.url = request.url
-			recentlyBlocked.blockedPath = sessionBlockedDomains[i]
-			return { redirectUrl: chrome.extension.getURL('../blocked/blocked.html') };
-		}
-		let domain = url.hostname.replace('www.', '')
-		let path = url.pathname.split('/').filter(pathname => pathname !== "")
-		path.unshift(domain)
-		for (let i = 0; i < sessionBlockedDomains.length; i++) {
-			let samePath = true
-			let blockedPath = sessionBlockedDomains[i].split('/')
-			for (let j = 0; j < blockedPath.length; j++) {
-				if (path[j] !== blockedPath[j]) {
-					samePath = false
-				}
-			}
-			if (samePath && path.length >= blockedPath.length) {
-				console.log('blocked', path, blockedPath)
-				recentlyBlocked.url = request.url
-				recentlyBlocked.blockedPath = sessionBlockedDomains[i]
-				return { redirectUrl: chrome.extension.getURL('../blocked/blocked.html') };
-			}
-		}
-	},
-	{ urls: ['<all_urls>'] },
-	['blocking']
-);
+function blockDomain(domain) {
+    if (blockedDomains.indexOf(domain) === -1) {
+        blockedDomains.push(domain)
+        chrome.storage.local.set({ blockedDomains })
+        chrome.declarativeNetRequest.updateSessionRules({
+            addRules: [{
+                id: hashString(domain),
+                priority: 1,
+                action: {
+                    type: "redirect",
+                    redirect: {
+                        extensionPath: "/blocked/blocked.html"
+                    }
+                },
+                condition: {
+                    urlFilter: domain,
+                    resourceTypes: [
+                        "main_frame"
+                    ]
+                }
+            }]
+        })
+    }
+}
 
-chrome.storage.onChanged.addListener(changes => {
-	storageBlockedDomains = changes.blockedDomains.newValue
-	sessionBlockedDomains = storageBlockedDomains.filter(domain => !tempAccess.includes(domain))
-})
+function unblockDomain(domain) {
+    let idx = blockedDomains.indexOf(domain)
+    if (idx !== -1) {
+        blockedDomains.splice(idx, 1)
+        chrome.storage.local.set({ blockedDomains })
+        chrome.declarativeNetRequest.updateSessionRules({
+            removeRuleIds: [hashString(domain)]
+        })
+    }
+}
 
+function addTempAccessDomain(domain) {
+    if (tempAccess.indexOf(domain) === -1) {
+        tempAccess.push(domain)
+        chrome.declarativeNetRequest.updateSessionRules({
+            removeRuleIds: [hashString(domain)]
+        })
+    }
+}
+
+function removeTempAccessDomain(domain) {
+    let idx = tempAccess.indexOf(domain)
+    if (idx !== -1) {
+        tempAccess.splice(idx, 1)
+        chrome.declarativeNetRequest.updateSessionRules({
+            addRules: [{
+                id: hashString(domain),
+                priority: 1,
+                action: {
+                    type: "redirect",
+                    redirect: {
+                        extensionPath: "/blocked/blocked.html"
+                    }
+                },
+                condition: {
+                    urlFilter: domain,
+                    resourceTypes: [
+                        "main_frame"
+                    ]
+                }
+            }]
+        })
+    }
+}
+
+function hashString(str) {
+    let hash = 0, i, chr
+    if (str.length === 0) return hash
+    for (i = 0; i < str.length; i++) {
+        chr = str.charCodeAt(i)
+        hash = ((hash << 5) - hash) + chr
+        hash |= 0 // Convert to 32bit integer
+    }
+    hash &= 0xfffffff
+    return hash
+}
+
+// better way to do this? maybe look into using chrome.events?
 chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
-	switch (message) {
-		case 'getRecentlyBlocked':
-			sendResponse(recentlyBlocked)
-			break
-		case 'getTempAccess':
-			sendResponse(tempAccess)
-			break
-		case 'addTempAccess':
-			tempAccess.push(payload)
-			sessionBlockedDomains = storageBlockedDomains.filter(domain => !tempAccess.includes(domain))
-			break
-		case 'setTempAccess':
-			tempAccess = payload
-			sessionBlockedDomains = storageBlockedDomains.filter(domain => !tempAccess.includes(domain))
-			break
-		default:
-			break
-	}
+    switch (message) {
+        case 'blockDomain':
+            blockDomain(payload)
+            break
+        case 'unblockDomain':
+            unblockDomain(payload)
+            break
+        case 'getBlockedDomains':
+            sendResponse(blockedDomains)
+            break
+        case 'addTempAccessDomain':
+            addTempAccessDomain(payload)
+            break
+        case 'removeTempAccessDomain':
+            removeTempAccessDomain(payload)
+            break
+        case 'getTempAccessDomains':
+            sendResponse(tempAccess)
+            break
+        default:
+            break
+    }
 })
+

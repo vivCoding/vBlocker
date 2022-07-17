@@ -22,6 +22,6 @@ instagram.com/expore
 Coming soon
 
 ### Roadmap
-- Upgrade to manifest V3
+- Upgrade to manifest V3 and use [declarativeNetRequest](https://developer.chrome.com/docs/extensions/reference/declarativeNetRequest/#type-UpdateRuleOptions)
 - Add feature to block all except (list of urls)
 - Block disabling/uninstalling extension
