@@ -1,6 +1,8 @@
 # vBlocker
 Simple browser extension that blocks user specified domains with a password
 
+This extension uses manifest v2, which is [soon to be deprecated](https://developer.chrome.com/docs/extensions/mv3/mv2-sunset/). If you are looking for the manifest v3 version, go to the [main branch](https://github.com/vivCoding/vBlocker)
+
 [Watch demo](https://youtu.be/RSFkTDDa0gQ)
 
 ### Features
@@ -20,8 +22,3 @@ instagram.com/expore
 
 ### Installation
 Coming soon
-
-### Roadmap
-- Upgrade to manifest V3
-- Add feature to block all except (list of urls)
-- Block disabling/uninstalling extension
