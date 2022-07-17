@@ -12,7 +12,7 @@ Block all urls under [www.instagram.com](www.instagram.com)
 ```
 instagram.com
 ````
-Block all urls under [www.instagram.com/explore](www.instagram.com/explore)
+Block all urls under [www.instagram.com/explore](www.instagram.com/explore). (Does not block [www.instagram.com](www.instagram.com)
 
 ```
 instagram.com/expore
