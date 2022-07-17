@@ -1,12 +1,20 @@
 /* Runs in background during browser session */
 
-console.log("Running vBlocker background.js")
-
 let blockedDomains = []
 let tempAccess = []
+let logs = []
+let extensionId = ""
 
 chrome.declarativeNetRequest.getDynamicRules(data => {
     blockedDomains = data.map(rule => rule.condition.urlFilter)
+})
+
+chrome.storage.local.get("logs", data => {
+    logs = data.logs ?? []
+})
+
+chrome.management.getSelf(data => {
+    extensionId = data.id
 })
 
 function blockDomain(domain) {
@@ -30,6 +38,7 @@ function blockDomain(domain) {
                 }
             }]
         })
+        addLog(domain, "block")
     }
 }
 
@@ -40,6 +49,7 @@ function unblockDomain(domain) {
         chrome.declarativeNetRequest.updateDynamicRules({
             removeRuleIds: [hashString(domain)]
         })
+        addLog(domain, "unblock")
     }
 }
 
@@ -61,6 +71,7 @@ function addTempAccessDomain(domain) {
                 }
             }]
         })
+        addLog(domain, "allow temporary access")
     }
 }
 
@@ -71,6 +82,7 @@ function removeTempAccessDomain(domain) {
         chrome.declarativeNetRequest.updateSessionRules({
             removeRuleIds: [hashString(domain)]
         })
+        addLog(domain, "remove temporary access")
     }
 }
 
@@ -85,6 +97,26 @@ function hashString(str) {
     hash &= 0xfffffff
     return hash
 }
+
+function addLog(domain, action) {
+    let currDate = new Date()
+    logs.push({
+        date: currDate.toLocaleDateString(),
+        time: currDate.toLocaleTimeString(),
+        action,
+        domain
+    })
+    chrome.storage.local.set({ logs })
+}
+
+chrome.management.onDisabled.addListener(() => {
+    // doesn't actually trigger. Is there a solution?
+    addLog("", "extension disabled")
+})
+
+chrome.management.onEnabled.addListener(() => {
+    addLog("", "extension enabled")
+})
 
 // better way to do this? maybe look into using chrome.events?
 chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
@@ -106,6 +138,9 @@ chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse
             break
         case 'getTempAccessDomains':
             sendResponse(tempAccess)
+            break
+        case 'getLogs':
+            sendResponse(logs)
             break
         default:
             break

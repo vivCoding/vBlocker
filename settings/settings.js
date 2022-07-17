@@ -16,6 +16,12 @@ $("document", () => {
 	})
 })
 
+$("#viewLogsBtn").click(function () {
+	chrome.tabs.create({
+		url: '../logs/index.html'
+	})
+})
+
 function renderSettings() {
 	settingsContent.show()
 	accessDeniedMessage.hide()
@@ -61,13 +67,11 @@ function renderTempAccessDomainToList(domain) {
 
 function rerenderBlockedDomain(listElement, domain) {
 	listElement.empty()
-		.append(`<span>${domain}</span>`)
 		.append($("<button class='unlockBtn'>Remove</button>")
 			.click(function () {
 				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
 					blockedDomains.splice(blockedDomains.indexOf(domain), 1)
-					listElement.remove()
-					unblockDomain(domain)
+					unblockDomain(domain, listElement)
 				}
 			}))
 		.append($("<button class='editBtn'></button>").text("Edit")
@@ -95,7 +99,7 @@ function rerenderBlockedDomain(listElement, domain) {
 					renderTempAccessDomainToList(domain)
 				}
 			}))
-
+		.append(`<span>${domain}</span>`)
 }
 
 function addDomain() {
