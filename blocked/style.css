@@ -1,0 +1,16 @@
+#blockedMessage {
+    display: flex;
+    height: 80vh;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#blockedMessage button {
+    font-size: larger;
+    margin: 0.5em
+}
+
+#blockedImg {
+    max-height: 300px;
+}

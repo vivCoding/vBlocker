@@ -1,0 +1,16 @@
+#logTable {
+    display: none;
+    padding: 1em;
+}
+
+#logTable th {
+    margin: 0;
+    padding: 0.5em;
+    border: 0.5px lightgrey solid;
+}
+
+#logTable td {
+    margin: 0;
+    padding: 0.5em;
+    border: 0.5px lightgrey solid;
+}

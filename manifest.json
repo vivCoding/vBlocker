@@ -1,8 +1,8 @@
 {
     "manifest_version": 2,
     "name": "vBlocker",
-    "version": "1.0",
-    "description": "Blocks user specified domains",
+    "version": "0.1",
+    "description": "Blocks user from accessing specified domains with a password ",
     "icons": {
         "48": "assets/logo-48.png",
         "96": "assets/logo-96.png"
@@ -10,17 +10,20 @@
     "permissions": [
         "webRequest",
         "webRequestBlocking",
-        "<all_urls>",
         "storage",
-        "management"
+        "management",
+        "<all_urls>"
     ],
     "browser_action": {
-        "default_icon": "assets/logo-32.png",
+        "default_icon": {
+            "48": "assets/logo-48.png",
+            "96": "assets/logo-96.png"
+        },
         "default_title": "vBlocker",
-        "default_popup": "popup/popup.html"
+        "default_popup": "popup/index.html"
     },
     "options_ui": {
-        "page": "settings/settings.html",
+        "page": "settings/index.html",
         "open_in_tab": true
     },
     "background": {
@@ -29,7 +32,7 @@
         ]
     },
     "web_accessible_resources": [
-        "blocked/blocked.html"
+        "blocked/index.html"
     ],
     "content_scripts": [
         {
