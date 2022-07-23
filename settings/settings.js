@@ -10,7 +10,7 @@ $("#changePwdBtn").click(changePassword)
 
 $("document", () => {
 	settingsContent.hide()
-	askPassword(success => {
+	askPassword().then(success => {
 		if (success) renderSettings()
 		else accessDeniedMessage.show()
 	})
@@ -25,8 +25,9 @@ $("#viewLogsBtn").click(function () {
 function renderSettings() {
 	settingsContent.show()
 	accessDeniedMessage.hide()
-	getBlockedDomains(data => {
+	getBlockedDomains().then(data => {
 		blockedDomains = data
+		console.log("finally we got", blockedDomains)
 		if (blockedDomains.length == 0) {
 			blockedDomainList.append(`<p>No blocked urls yet.</p>`)
 		}
@@ -34,7 +35,7 @@ function renderSettings() {
 			renderDomainToList(domain)
 		})
 	})
-	getTempAccessDomains(data => {
+	getTempAccessDomains().then(data => {
 		tempAccessDomains = data
 		if (tempAccessDomains.length == 0) {
 			tempAccessList.append(`<p>No temporarily allowed domains yet.</p>`)
@@ -71,6 +72,7 @@ function rerenderBlockedDomain(listElement, domain) {
 			.click(function () {
 				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
 					blockedDomains.splice(blockedDomains.indexOf(domain), 1)
+					listElement.remove()
 					unblockDomain(domain, listElement)
 				}
 			}))
@@ -119,21 +121,28 @@ function addDomain() {
 	}
 }
 
-function changePassword() {
-	askPassword(success => {
-		while (success) {
-			let newPassword = prompt("Enter new password")
-			if (newPassword == null) return
-			let confirmPassword = prompt("Re-enter new password")
-			if (confirmPassword == null) return
-			if (newPassword === confirmPassword) {
-				chrome.storage.local.set({ password: newPassword }, function () {
-					alert("Successfully changed password!")
-				})
-				break
-			} else {
-				alert("New password and confirmed new password did not match!")
-			}
+async function changePassword() {
+	// first make user enter old password (if set)
+	const isSet = await isPasswordSet()
+	if (isSet) {
+		const shouldContinue = await askPassword(warn = false, message = "Enter old password:")
+		if (!shouldContinue) {
+			return
 		}
-	}, warn = false)
+	}
+	// prompt for new password
+	while (true) {
+		let newPassword = prompt("Enter new password")
+		if (newPassword == null) return
+		let confirmPassword = prompt("Re-enter new password")
+		if (confirmPassword == null) return
+		if (newPassword === confirmPassword) {
+			setPassword(newPassword).then(() => {
+				alert("Successfully changed password!")
+			})
+			break
+		} else {
+			alert("New password and confirmed new password did not match!")
+		}
+	}
 }

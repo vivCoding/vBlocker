@@ -7,9 +7,9 @@ chrome.runtime.onMessage.addListener(({ message, payload }, sender, response) =>
             let domain = getDomainAndPath(window.location.href)
             let confirmedDomain = window.prompt(`Block this domain?`, domain)
             if (confirmedDomain) {
-                askPassword(success => {
+                askPassword().then(success => {
                     if (success) {
-                        blockDomain(confirmedDomain, () => {
+                        blockDomain(confirmedDomain).then(() => {
                             alert(`Added domain ${confirmedDomain} to blocked domains list!\nYou can edit it later in the settings page.`)
                             window.location.reload()
                         })
@@ -22,27 +22,26 @@ chrome.runtime.onMessage.addListener(({ message, payload }, sender, response) =>
     }
 })
 
-// TODO: somehow make this more secure
-function askPassword(callback = undefined, warn = true, message = "Enter password") {
-    chrome.storage.local.get("password", data => {
-        let password = data.password
-        if (!password && warn) {
-            alert("Warning: No password has been set!\nSet a password in the settings page to avoid users modifying blocked sites and disabling extension")
-        } else if (password) {
-            while (true) {
-                input = prompt(message)
-                if (input === password) {
-                    break
-                } else if (input === null) {
-                    callback(false)
-                    return
+async function askPassword(warn = true, message = "Enter password") {
+    const isSet = await isPasswordSet()
+    if (!isSet && warn) {
+        alert("Warning: No password has been set!\nSet a password in the settings page to avoid users modifying blocked sites and disabling extension")
+        return true
+    } else {
+        while (true) {
+            let input = prompt(message)
+            if (!input) {
+                return false
+            } else {
+                const success = await checkPassword(input)
+                if (success) {
+                    return true
                 } else {
                     alert("Incorrect password")
                 }
             }
         }
-        if (callback) callback(true)
-    })
+    }
 }
 
 function getDomainAndPath(url) {
@@ -55,31 +54,59 @@ function getDomainAndPath(url) {
     return pathname
 }
 
+// #region helper functions to communicate with background.js
 
-function blockDomain(domain, callback) {
-    chrome.runtime.sendMessage({ message: "blockDomain", payload: domain }, callback)
+function sendMessagePromise(message, payload = null) {
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ message, payload }, data => {
+            resolve(data)
+        })
+    })
 }
 
-function unblockDomain(domain, callback) {
-    chrome.runtime.sendMessage({ message: "unblockDomain", payload: domain }, callback)
+async function blockDomain(domain) {
+    await sendMessagePromise("blockDomain", domain)
 }
 
-function getBlockedDomains(callback) {
-    chrome.runtime.sendMessage({ message: "getBlockedDomains" }, callback)
+async function unblockDomain(domain) {
+    await sendMessagePromise("unblockDomain", domain)
 }
 
-function addTempAccessDomain(domain, callback) {
-    chrome.runtime.sendMessage({ message: "addTempAccessDomain", payload: domain }, callback)
+async function getBlockedDomains() {
+    const data = await sendMessagePromise("getBlockedDomains")
+    return data
 }
 
-function removeTempAccessDomain(domain, callback) {
-    chrome.runtime.sendMessage({ message: "removeTempAccessDomain", payload: domain }, callback)
+async function addTempAccessDomain(domain) {
+    await sendMessagePromise("addTempAccessDomain", domain)
 }
 
-function getTempAccessDomains(callback) {
-    chrome.runtime.sendMessage({ message: "getTempAccessDomains" }, callback)
+async function removeTempAccessDomain(domain) {
+    await sendMessagePromise("removeTempAccessDomain", domain)
 }
 
-function getLogs(callback) {
-    chrome.runtime.sendMessage({ message: "getLogs" }, callback)
+async function getTempAccessDomains() {
+    const data = await sendMessagePromise("getTempAccessDomains")
+    return data
 }
+
+async function checkPassword(password) {
+    const data = await sendMessagePromise("checkPassword", password)
+    return data
+}
+
+async function setPassword(password) {
+    await sendMessagePromise("setPassword", password)
+}
+
+async function isPasswordSet() {
+    const data = await sendMessagePromise("isPasswordSet")
+    return data
+}
+
+async function getLogs() {
+    const data = await sendMessagePromise("getLogs")
+    return data
+}
+
+// #endregion helper functions to communicate with background.js
