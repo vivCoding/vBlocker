@@ -7,7 +7,6 @@ let extensionId = ""
 
 chrome.storage.local.get("blockedDomains", data => {
     logs = data.blockedDomains ?? []
-    console.log("we got", blockedDomains)
 })
 
 chrome.storage.local.get("logs", data => {
@@ -24,14 +23,11 @@ chrome.webRequest.onBeforeRequest.addListener(
         let url = new URL(request.url)
         let path = request.url.replace('www.', '').replace(url.protocol + "//", '')
 
-        console.log("got", path)
 
         for (let i = 0; i < blockedDomains.length; i++) {
-            console.log("whoop", blockedDomains[i], path.indexOf(blockedDomains[i]), tempAccess.indexOf(blockedDomains[i]))
             if (path.indexOf(blockedDomains[i]) === 0) {
                 if (tempAccess.indexOf(blockedDomains[i]) === -1) {
-                    console.log("we shoudl block", chrome.extension.getURL('../blocked/index.html'))
-                    return { redirectUrl: chrome.extension.getURL('../blocked/index.html') }
+                    return { redirectUrl: chrome.runtime.getURL('../blocked/index.html') }
                 }
             }
         }
