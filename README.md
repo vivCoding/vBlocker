@@ -22,7 +22,8 @@ instagram.com/expore
 ```
 
 ### Installation
-The extension can be downloaded from [releases](https://github.com/vivCoding/vBlocker/releases/tag/v0.1). You can then install the file into your browser. [Here's a guide](https://support.mozilla.org/en-US/kb/find-and-install-add-ons-add-features-to-firefox#w_how-do-i-find-and-install-add-ons) for Firefox.
+Coming soon
+<!-- The extension can be downloaded from [releases](https://github.com/vivCoding/vBlocker/releases/tag/v0.1). You can then install the file into your browser. [Here's a guide](https://support.mozilla.org/en-US/kb/find-and-install-add-ons-add-features-to-firefox#w_how-do-i-find-and-install-add-ons) for Firefox. -->
 
 ### Privacy Policy
 

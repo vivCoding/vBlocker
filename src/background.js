@@ -89,18 +89,9 @@ function isPasswordSet() {
     return password !== ""
 }
 
-chrome.management.onInstalled.addListener(() => {
-    addLog("extension installed")
-})
-
-chrome.management.onDisabled.addListener(() => {
-    // TODO doesn't actually trigger. Is there a solution?
-    addLog("extension disabled")
-})
-
-chrome.management.onEnabled.addListener(() => {
-    addLog("extension enabled")
-})
+chrome.management.onInstalled.addListener(() => addLog("extension installed"))
+chrome.management.onDisabled.addListener(() => addLog("extension disabled")) // TODO doesn't actually trigger. Is there a solution?
+chrome.management.onEnabled.addListener(() => addLog("extension enabled"))
 
 // acts as an "api" and responds to requests from the main webpage (main.js)
 // better way to do this? maybe look into using chrome.events?
