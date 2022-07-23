@@ -10,7 +10,7 @@ $("#changePwdBtn").click(changePassword)
 
 $("document", () => {
 	settingsContent.hide()
-	askPassword(success => {
+	askPassword().then(success => {
 		if (success) renderSettings()
 		else accessDeniedMessage.show()
 	})
@@ -25,20 +25,21 @@ $("#viewLogsBtn").click(function () {
 function renderSettings() {
 	settingsContent.show()
 	accessDeniedMessage.hide()
-	getBlockedDomains(data => {
+	getBlockedDomains().then(data => {
 		blockedDomains = data
-		if (blockedDomains.length == 0) {
-			blockedDomainList.append(`<p>No blocked urls yet.</p>`)
-		}
+		// TODO fix
+		// if (blockedDomains.length == 0) {
+		// 	blockedDomainList.append(`<p>No blocked urls yet.</p>`)
+		// }
 		blockedDomains.forEach(domain => {
 			renderDomainToList(domain)
 		})
 	})
-	getTempAccessDomains(data => {
+	getTempAccessDomains().then(data => {
 		tempAccessDomains = data
-		if (tempAccessDomains.length == 0) {
-			tempAccessList.append(`<p>No temporarily allowed domains yet.</p>`)
-		}
+		// if (tempAccessDomains.length == 0) {
+		// 	tempAccessList.append(`<p>No temporarily allowed domains yet.</p>`)
+		// }
 		tempAccessDomains.forEach(domain => {
 			renderTempAccessDomainToList(domain)
 		})
@@ -71,7 +72,7 @@ function rerenderBlockedDomain(listElement, domain) {
 			.click(function () {
 				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
 					blockedDomains.splice(blockedDomains.indexOf(domain), 1)
-					unblockDomain(domain, listElement)
+					unblockDomain(domain).then(() => listElement.remove())
 				}
 			}))
 		.append($("<button class='editBtn'></button>").text("Edit")
@@ -85,8 +86,7 @@ function rerenderBlockedDomain(listElement, domain) {
 							let newDomain = editPrompt
 							blockedDomains[blockedDomains.indexOf(domain)] = newDomain
 							rerenderBlockedDomain(listElement, newDomain)
-							unblockDomain(domain)
-							blockDomain(newDomain)
+							unblockDomain(domain).then(() => blockDomain(newDomain))
 							break
 						}
 					} else break
@@ -119,21 +119,28 @@ function addDomain() {
 	}
 }
 
-function changePassword() {
-	askPassword(success => {
-		while (success) {
-			let newPassword = prompt("Enter new password")
-			if (newPassword == null) return
-			let confirmPassword = prompt("Re-enter new password")
-			if (confirmPassword == null) return
-			if (newPassword === confirmPassword) {
-				chrome.storage.local.set({ password: newPassword }, function () {
-					alert("Successfully changed password!")
-				})
-				break
-			} else {
-				alert("New password and confirmed new password did not match!")
-			}
+async function changePassword() {
+	// first make user enter old password (if set)
+	const isSet = await isPasswordSet()
+	if (isSet) {
+		const shouldContinue = await askPassword(warn = false, message = "Enter old password:")
+		if (!shouldContinue) {
+			return
 		}
-	}, warn = false)
+	}
+	// prompt for new password
+	while (true) {
+		let newPassword = prompt("Enter new password")
+		if (newPassword == null) return
+		let confirmPassword = prompt("Re-enter new password")
+		if (confirmPassword == null) return
+		if (newPassword === confirmPassword) {
+			setPassword(newPassword).then(() => {
+				alert("Successfully changed password!")
+			})
+			break
+		} else {
+			alert("New password and confirmed new password did not match!")
+		}
+	}
 }

@@ -3,27 +3,22 @@
 let blockedDomains = []
 let tempAccess = []
 let logs = []
-let extensionId = ""
+let password = ""
 
-chrome.declarativeNetRequest.getDynamicRules(data => {
-    blockedDomains = data.map(rule => rule.condition.urlFilter)
-})
-
-chrome.storage.local.get("logs", data => {
-    logs = data.logs ?? []
-})
-
-chrome.management.getSelf(data => {
-    extensionId = data.id
+// retrieve info from storage for easier access
+chrome.runtime.onStartup.addListener(() => {
+    chrome.declarativeNetRequest.getDynamicRules(data => blockedDomains = data.map(rule => rule.condition.urlFilter.slice(2)))
+    chrome.storage.local.get("logs", data => logs = data.logs ?? [])
+    chrome.storage.local.get("password", data => password = data.password ?? "")
 })
 
 function blockDomain(domain) {
     if (blockedDomains.indexOf(domain) === -1) {
-        blockedDomains.push(domain)
+        // let the rules do the work
         chrome.declarativeNetRequest.updateDynamicRules({
             addRules: [{
                 id: hashString(domain),
-                priority: 1,
+                priority: 10,
                 action: {
                     type: "redirect",
                     redirect: {
@@ -31,62 +26,70 @@ function blockDomain(domain) {
                     }
                 },
                 condition: {
-                    urlFilter: domain,
+                    urlFilter: `||${domain}`,
                     resourceTypes: [
                         "main_frame"
                     ]
                 }
             }]
+        }, () => {
+            blockedDomains.push(domain)
+            addLog("block", domain)
         })
-        addLog(domain, "block")
     }
 }
 
 function unblockDomain(domain) {
     let idx = blockedDomains.indexOf(domain)
     if (idx !== -1) {
-        blockedDomains.splice(idx, 1)
         chrome.declarativeNetRequest.updateDynamicRules({
             removeRuleIds: [hashString(domain)]
+        }, () => {
+            blockedDomains.splice(idx, 1)
+            addLog("unblock", domain)
         })
-        addLog(domain, "unblock")
     }
 }
 
 function addTempAccessDomain(domain) {
     if (tempAccess.indexOf(domain) === -1) {
-        tempAccess.push(domain)
+        // session rules are discarded after session close
+        // set to higher priority to override the dynamic rules
         chrome.declarativeNetRequest.updateSessionRules({
             addRules: [{
                 id: hashString(domain),
-                priority: 2,
+                priority: 20,
                 action: {
                     type: "allow",
                 },
                 condition: {
-                    urlFilter: domain,
+                    urlFilter: `||${domain}`,
                     resourceTypes: [
                         "main_frame"
                     ]
                 }
             }]
+        }, () => {
+            tempAccess.push(domain)
+            addLog("allow temporary access", domain)
         })
-        addLog(domain, "allow temporary access")
     }
 }
 
 function removeTempAccessDomain(domain) {
     let idx = tempAccess.indexOf(domain)
     if (idx !== -1) {
-        tempAccess.splice(idx, 1)
         chrome.declarativeNetRequest.updateSessionRules({
             removeRuleIds: [hashString(domain)]
+        }, () => {
+            tempAccess.splice(idx, 1)
+            addLog("remove temporary access", domain)
         })
-        addLog(domain, "remove temporary access")
     }
 }
 
 function hashString(str) {
+    // helper function to assign a numeric id given a domain name
     let hash = 0, i, chr
     if (str.length === 0) return hash
     for (i = 0; i < str.length; i++) {
@@ -98,7 +101,8 @@ function hashString(str) {
     return hash
 }
 
-function addLog(domain, action) {
+function addLog(action, domain = "") {
+    // helper function to add and save log
     let currDate = new Date()
     logs.push({
         date: currDate.toLocaleDateString(),
@@ -109,35 +113,55 @@ function addLog(domain, action) {
     chrome.storage.local.set({ logs })
 }
 
-chrome.management.onDisabled.addListener(() => {
-    // doesn't actually trigger. Is there a solution?
-    addLog("", "extension disabled")
-})
+function checkPassword(inputPassword) {
+    return inputPassword === password
+}
 
-chrome.management.onEnabled.addListener(() => {
-    addLog("", "extension enabled")
-})
+// TODO encrypt password
+function setPassword(inputPassword) {
+    password = inputPassword
+    chrome.storage.local.set({ password })
+    addLog("password changed")
+}
 
+function isPasswordSet() {
+    return password !== ""
+}
+
+chrome.management.onInstalled.addListener(() => addLog("extension installed"))
+chrome.management.onDisabled.addListener(() => addLog("extension disabled")) // TODO doesn't actually trigger. Is there a solution?
+chrome.management.onEnabled.addListener(() => addLog("extension enabled"))
+
+// acts as an "api" and responds to requests from the main webpage (main.js)
 // better way to do this? maybe look into using chrome.events?
 chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
     switch (message) {
         case 'blockDomain':
-            blockDomain(payload)
+            sendResponse(blockDomain(payload))
             break
         case 'unblockDomain':
-            unblockDomain(payload)
+            sendResponse(unblockDomain(payload))
             break
         case 'getBlockedDomains':
             sendResponse(blockedDomains)
             break
         case 'addTempAccessDomain':
-            addTempAccessDomain(payload)
+            sendResponse(addTempAccessDomain(payload))
             break
         case 'removeTempAccessDomain':
-            removeTempAccessDomain(payload)
+            sendResponse(removeTempAccessDomain(payload))
             break
         case 'getTempAccessDomains':
             sendResponse(tempAccess)
+            break
+        case 'checkPassword':
+            sendResponse(checkPassword(payload))
+            break
+        case 'setPassword':
+            sendResponse(setPassword(payload))
+            break
+        case 'isPasswordSet':
+            sendResponse(isPasswordSet(payload))
             break
         case 'getLogs':
             sendResponse(logs)

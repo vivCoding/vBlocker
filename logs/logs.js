@@ -3,7 +3,7 @@ let logTable = $("#logTable")
 
 $("document", () => {
     logTable.hide()
-    askPassword(success => {
+    askPassword().then(success => {
         if (success) renderLogs()
         else accessDeniedMessage.show()
     })
@@ -12,7 +12,7 @@ $("document", () => {
 function renderLogs() {
     accessDeniedMessage.hide()
     logTable.show()
-    getLogs(data => {
+    getLogs().then(data => {
         data.reverse().map(log => {
             let row = $('<tr></tr>')
                 .append(`<td>${log.date}</td>`)
