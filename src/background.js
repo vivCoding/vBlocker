@@ -5,10 +5,12 @@ let tempAccess = []
 let logs = []
 let password = ""
 
-// retrieve info from storage
-chrome.storage.local.get("blockedDomains", data => blockedDomains = data.blockedDomains ?? [])
-chrome.storage.local.get("logs", data => logs = data.logs ?? [])
-chrome.storage.local.get("password", data => password = data.password ?? "")
+// retrieve info from storage for easier access
+chrome.runtime.onStartup.addListener(() => {
+    chrome.storage.local.get("blockedDomains", data => blockedDomains = data.blockedDomains ?? [])
+    chrome.storage.local.get("logs", data => logs = data.logs ?? [])
+    chrome.storage.local.get("password", data => password = data.password ?? "")
+})
 
 // intercepts every request and checks to see if user has blocked it
 chrome.webRequest.onBeforeRequest.addListener(
@@ -98,19 +100,19 @@ chrome.management.onEnabled.addListener(() => addLog("extension enabled"))
 chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse) => {
     switch (message) {
         case 'blockDomain':
-            blockDomain(payload)
+            sendResponse(blockDomain(payload))
             break
         case 'unblockDomain':
-            unblockDomain(payload)
+            sendResponse(unblockDomain(payload))
             break
         case 'getBlockedDomains':
             sendResponse(blockedDomains)
             break
         case 'addTempAccessDomain':
-            addTempAccessDomain(payload)
+            sendResponse(addTempAccessDomain(payload))
             break
         case 'removeTempAccessDomain':
-            removeTempAccessDomain(payload)
+            sendResponse(removeTempAccessDomain(payload))
             break
         case 'getTempAccessDomains':
             sendResponse(tempAccess)
@@ -119,7 +121,7 @@ chrome.runtime.onMessage.addListener(({ message, payload }, sender, sendResponse
             sendResponse(checkPassword(payload))
             break
         case 'setPassword':
-            setPassword(payload)
+            sendResponse(setPassword(payload))
             break
         case 'isPasswordSet':
             sendResponse(isPasswordSet(payload))

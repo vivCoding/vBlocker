@@ -27,19 +27,19 @@ function renderSettings() {
 	accessDeniedMessage.hide()
 	getBlockedDomains().then(data => {
 		blockedDomains = data
-		console.log("finally we got", blockedDomains)
-		if (blockedDomains.length == 0) {
-			blockedDomainList.append(`<p>No blocked urls yet.</p>`)
-		}
+		// TODO fix
+		// if (blockedDomains.length == 0) {
+		// 	blockedDomainList.append(`<p>No blocked urls yet.</p>`)
+		// }
 		blockedDomains.forEach(domain => {
 			renderDomainToList(domain)
 		})
 	})
 	getTempAccessDomains().then(data => {
 		tempAccessDomains = data
-		if (tempAccessDomains.length == 0) {
-			tempAccessList.append(`<p>No temporarily allowed domains yet.</p>`)
-		}
+		// if (tempAccessDomains.length == 0) {
+		// 	tempAccessList.append(`<p>No temporarily allowed domains yet.</p>`)
+		// }
 		tempAccessDomains.forEach(domain => {
 			renderTempAccessDomainToList(domain)
 		})
@@ -72,8 +72,7 @@ function rerenderBlockedDomain(listElement, domain) {
 			.click(function () {
 				if (confirm(`Are you sure you want to unblock "${domain}"?`)) {
 					blockedDomains.splice(blockedDomains.indexOf(domain), 1)
-					listElement.remove()
-					unblockDomain(domain, listElement)
+					unblockDomain(domain).then(() => listElement.remove())
 				}
 			}))
 		.append($("<button class='editBtn'></button>").text("Edit")
@@ -87,8 +86,7 @@ function rerenderBlockedDomain(listElement, domain) {
 							let newDomain = editPrompt
 							blockedDomains[blockedDomains.indexOf(domain)] = newDomain
 							rerenderBlockedDomain(listElement, newDomain)
-							unblockDomain(domain)
-							blockDomain(newDomain)
+							unblockDomain(domain).then(() => blockDomain(newDomain))
 							break
 						}
 					} else break
