@@ -6,11 +6,9 @@ let logs = []
 let password = ""
 
 // retrieve info from storage for easier access
-chrome.runtime.onStartup.addListener(() => {
-    chrome.storage.local.get("blockedDomains", data => blockedDomains = data.blockedDomains ?? [])
-    chrome.storage.local.get("logs", data => logs = data.logs ?? [])
-    chrome.storage.local.get("password", data => password = data.password ?? "")
-})
+chrome.storage.local.get("blockedDomains", data => blockedDomains = data.blockedDomains ?? [])
+chrome.storage.local.get("logs", data => logs = data.logs ?? [])
+chrome.storage.local.get("password", data => password = data.password ?? "")
 
 // intercepts every request and checks to see if user has blocked it
 chrome.webRequest.onBeforeRequest.addListener(
